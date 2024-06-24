@@ -1,0 +1,126 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+
+
+sub help {
+print "Reads fasta file with iupac-coded diploid sequence,\n";
+print "and outputs new fasta file with 2 sequences per sample, with iupac codes solved randomly.\n";
+print "The new sequences are called name_1 and name_2\n";
+print "B Nevado, 050424\n";
+}
+
+my $infile = "";
+my $outfile = "";
+
+#get args
+GetOptions ("in=s" => \$infile,
+            "out=s" => \$outfile
+            ) or die "Incorrect usage!\n";
+
+if ( $infile eq "" || $outfile eq "" ){
+help();
+die "Need infile name (-in),and outfile name (-out)\n";
+}
+
+
+
+
+my %iupac;
+
+$iupac{'A'} = ["A","A"];
+$iupac{'a'} = ["a","a"];
+
+$iupac{'C'} = ["C","C"];
+$iupac{'c'} = ["c","c"];
+
+$iupac{'G'} = ["G","G"];
+$iupac{'g'} = ["g","g"];
+
+$iupac{'T'} = ["T","T"];
+$iupac{'t'} = ["t","t"];
+
+$iupac{'R'} = ["A","G"];
+$iupac{'r'} = ["a","g"];
+
+$iupac{'Y'} = ["C","T"];
+$iupac{'y'} = ["c","t"];
+
+$iupac{'S'} = ["G","C"];
+$iupac{'s'} = ["g","c"];
+
+$iupac{'W'} = ["A","T"];
+$iupac{'w'} = ["a","t"];
+
+$iupac{'K'} = ["G","T"];
+$iupac{'k'} = ["g","t"];
+
+$iupac{'M'} = ["A","C"];
+$iupac{'m'} = ["a","c"];
+
+
+$iupac{'N'} = ["N","N"];
+$iupac{'n'} = ["n","n"];
+
+$iupac{'-'} = ["-","-"];
+
+
+# read sequences
+my %seqs;
+my @names;
+open my $fhi, "<", $infile or die " cant open for reading infile $infile: $!\n";
+my $name = "";
+my $seq = "";
+while(<$fhi>){
+	chomp;
+    if( />/ ){
+        if( $name eq "" ){
+            $name = $_;
+            push @names, $_;
+        }
+        else{
+        	$seqs{$name} = $seq;
+        	$seq ="";
+        	$name = $_;
+        	push @names, $_;
+
+        }
+    }
+    else{
+    	chomp;
+        $seq .= $_;
+
+    }
+}
+$seqs{$name} = $seq;
+
+close($fhi);
+
+
+#use Data::Dumper;
+#print Dumper(\%iupac);
+#exit;
+
+open my $fho, ">", $outfile or die "cant open for writing file $outfile: $!\n";
+
+foreach my $name (@names){
+	my @seq = split //, $seqs{$name};
+	my $seq1;
+	my $seq2;
+
+	for my $i (0..$#seq){
+
+	    $seq1 .= $iupac{$seq[$i]}[0];
+	    $seq2 .= $iupac{$seq[$i]}[1];
+	}
+	
+	print $fho $name,"_1\n$seq1\n",$name,"_2\n$seq2\n";
+
+}
+
+
+
+
+
